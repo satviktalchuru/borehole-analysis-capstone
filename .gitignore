@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+outputs_smoke/
+.DS_Store
+.Rhistory
+.pytest_cache/
+.coverage
+
+# JavaScript dependencies/build outputs
+node_modules/
+dist/
+
+# Local deployment metadata
+.vercel/

@@ -1,0 +1,10 @@
+.DS_Store
+.git
+.github
+.pytest_cache
+.venv
+__pycache__
+*.pyc
+outputs/
+viewer-react/dist/
+viewer-react/node_modules/

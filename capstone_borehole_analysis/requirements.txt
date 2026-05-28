@@ -1,0 +1,7 @@
+numpy
+scipy
+scikit-learn
+scikit-image
+pyvista
+trimesh
+matplotlib

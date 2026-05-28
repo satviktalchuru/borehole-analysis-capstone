@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
+
+      - name: Generate model evaluation report
+        run: |
+          python borehole_evaluation.py \
+            --run 2800000-dp outputs \
+            --run 2750000-single outputs_2750000 \
+            --run 2750000-dp outputs_2750000_dp \
+            --run 2750000-hybrid-dp outputs_2750000_hybrid_dp \
+            --out-dir docs
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: viewer-react/package-lock.json
+
+      - name: Install viewer dependencies
+        working-directory: viewer-react
+        run: npm ci
+
+      - name: Run viewer tests
+        working-directory: viewer-react
+        run: npm test
+
+      - name: Build viewer
+        working-directory: viewer-react
+        run: npm run build
+
+      - name: Build Docker image
+        run: docker build -t borehole-reconstruction .
+
+      - name: Run tests in Docker
+        run: docker run --rm borehole-reconstruction

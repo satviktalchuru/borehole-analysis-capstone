@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd viewer-react && npm ci && npm run build",
+  "installCommand": "cd viewer-react && npm ci",
+  "outputDirectory": "viewer-react/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
