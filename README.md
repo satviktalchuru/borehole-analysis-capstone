@@ -4,6 +4,8 @@ UCSB Data Science year-long capstone project for reconstructing horizontal direc
 
 The short version: this project turns raw, hard-to-interpret simulation particles into a continuous 3D borehole mesh that can be inspected in a browser, evaluated with quality metrics, and exported as a CAD-ready STL file.
 
+This project was developed as part of the UCSB Data Science capstone with Singularity Solutions.
+
 ## Why This Matters
 
 Horizontal directional drilling (HDD) is used to install underground utilities without digging a full trench. In simulation, the drilling process produces large 3D point clouds showing soil particles, tool geometry, and the resulting cavity.
@@ -16,6 +18,18 @@ The challenge is that the borehole is not given as a clean surface. It has to be
 - Can the geometry be exported into standard 3D/CAD formats?
 
 This project builds a reconstruction pipeline for that problem.
+
+## Dataset Context
+
+The capstone data came from a granular physics simulation of horizontal directional drilling provided by Singularity Solutions. The simulation generated:
+
+- a soil particle point cloud in VTK format
+- a drill-head reference mesh in STL format
+- roughly 700,000 raw soil particle coordinates
+
+Each soil point contains only a 3D spatial coordinate `(x, y, z)`. It does not contain a label saying "borehole", "soil", "wall", "density", or "boundary". The borehole must therefore be inferred from spatial structure alone: it appears as a low-density void surrounded by denser soil particles.
+
+After mirroring the simulated point cloud to recover symmetry, the strongest runs used about 1.39 million points of geometric support.
 
 ## What The Project Does
 
@@ -42,6 +56,7 @@ That worked on clean regions, but it produced visible artifacts:
 - neighboring slices could choose inconsistent fits
 - sparse regions created jagged transitions
 - some slices latched onto noise instead of the cavity boundary
+- exterior empty space could be mistaken for the actual borehole cavity
 - the resulting STL could look spliced or uneven
 
 The key lesson was that each slice cannot be treated as an isolated problem. A real borehole should be locally smooth and continuous, so the model needs both local fit quality and global path consistency.
@@ -69,6 +84,8 @@ Instead of fitting against every point in a slice, the pipeline looks for likely
 - gradient-based boundary detection from local density maps
 - radial boundary extraction from angular bins
 - hybrid gradient/radial extraction
+
+One important segmentation improvement from the capstone work was rejecting any low-density component that touches the edge of a slice image. Without that step, the exterior empty region outside the soil mass can be confused with the interior borehole void.
 
 This helps separate meaningful borehole boundary evidence from interior noise and unrelated soil points.
 
@@ -107,6 +124,18 @@ The evaluation report compares several reconstruction runs:
 The dynamic-programming version improved fit quality while keeping the mesh watertight and smooth. The radial/hybrid experiment was implemented and tested, but gradient + dynamic programming remains the default because it performed better on the available datasets.
 
 Full evaluation: [`capstone_borehole_analysis/docs/model_evaluation.md`](capstone_borehole_analysis/docs/model_evaluation.md)
+
+## Capstone Poster Takeaways
+
+The capstone poster summarized the project status this way:
+
+- the pipeline converted an unstructured, unlabeled particle cloud into a continuous CAD-ready borehole surface
+- segmentation improved after exterior low-density regions were removed
+- continuity metrics helped identify unstable slices and weak end regions
+- short internal gaps could be repaired by interpolation, while unsupported extrapolation at the borehole ends was avoided
+- the final reconstruction produced a conservative watertight mesh in the strongest reported runs
+
+The repository extends that capstone work with a more software-engineered structure: tests, reusable metrics, cross-run evaluation, Docker support, CI, deployment configuration, and a web-based mesh viewer.
 
 ## Interactive Viewer
 
@@ -192,3 +221,13 @@ python borehole_evaluation.py \
 ## Project Framing
 
 This project sits at the intersection of applied machine learning, computational geometry, scientific computing, and construction technology. The focus is not just fitting a shape, but building a reproducible reconstruction system with metrics, tests, deployment documentation, and an interface for inspecting the result.
+
+## Future Directions
+
+The next useful extensions are:
+
+- compare borehole geometry across different drill-head designs
+- add more automatic parameter tuning for one-click reconstruction
+- expose measurement tools in the 3D viewer
+- estimate uncertainty or confidence intervals for reconstructed surfaces
+- adapt the method to flat-terrain simulations where surface compression is also important

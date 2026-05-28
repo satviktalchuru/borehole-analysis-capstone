@@ -8,11 +8,14 @@ The pipeline reconstructs a continuous borehole surface from noisy horizontal di
 
 The simulation data does not directly provide a clean borehole surface. Instead, it gives unstructured 3D particles and tool geometry. The borehole has to be inferred from where soil is missing or displaced.
 
+In the capstone dataset, each soil particle is represented only by a coordinate `(x, y, z)`. There are no direct density labels, wall labels, or cavity-boundary annotations. The borehole appears indirectly as a low-density void within the surrounding particle cloud.
+
 That is difficult because:
 
 - the point cloud is noisy and irregular
 - cavity boundaries can be sparse or incomplete
 - individual cross-sections can contain outliers
+- exterior empty regions can be confused with the borehole if slice segmentation is too naive
 - fitting each slice independently can create a jagged or spliced mesh
 
 The goal is to turn that raw simulation output into something closer to an engineering artifact: a smooth, continuous, measurable STL surface.
@@ -40,6 +43,8 @@ PCA estimates the dominant direction of the borehole from candidate points. This
 ### Boundary Extraction
 
 The model does not fit against every nearby soil point. It first tries to identify points that are likely to sit near the cavity boundary. The current code supports gradient-based, radial, and hybrid boundary modes.
+
+One important practical detail is that low-density components touching the slice boundary are rejected. This prevents exterior empty space from being mistaken for the interior borehole cavity.
 
 ### RANSAC Ellipse Fitting
 
@@ -106,3 +111,11 @@ Public users should access a deployed static build, not the Vite development ser
 - [Pipeline architecture](docs/pipeline_architecture.md)
 - [Model evaluation report](docs/model_evaluation.md)
 - [Deployment guide](docs/deployment.md)
+
+## Future Work
+
+- compare different drill-head geometries
+- add automatic parameter tuning
+- improve measurement tools in the 3D viewer
+- estimate uncertainty ranges for reconstructed surfaces
+- extend the method to flat-terrain surface-compression analysis
